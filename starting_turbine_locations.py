@@ -94,10 +94,12 @@ def perturb(x,y,perturbation):
 
 
 if __name__=="__main__":
-    nTurbines = 10
+    nTurbines = 25
     rotor_diameter = 150.
     farm_radius = 1000.
-    x,y, = random_circular_start(nTurbines,rotor_diameter,farm_radius)
+    # x,y, = random_circular_start(nTurbines,rotor_diameter,farm_radius)
+    x,y = grid_start(5,rotor_diameter,3.)
+    x,y = perturb(x,y,rotor_diameter/2.)
 
-    plot_turbine_locations(x,y,np.ones(nTurbines)*rotor_diameter,circle_boundary=True,farm_radius=farm_radius)
+    plot_turbine_locations(x,y,np.ones(nTurbines)*rotor_diameter)#,circle_boundary=True,farm_radius=farm_radius)
     plt.show()
