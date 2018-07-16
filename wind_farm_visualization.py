@@ -4,7 +4,9 @@ import math
 
 
 def plot_wind_rose(dirs,yval,color='blue',alpha=0.25,title=False,titlesize=20,titlefont='serif',\
-                    tics=False,ticangle=-45.,ticlabels=False,ticlabelsize=18,ticlabelfont='serif',dirsize=20,dirfont='serif'):
+                    tics=False,ticangle=-45.,ticlabels=False,ticlabelsize=18,ticlabelfont='serif',\
+                    dirsize=20,dirfont='serif'):
+
     """create wind rose plot.
     must save figure outside of this function
     must call plt.show() if you want the figure to remain shown
@@ -33,12 +35,11 @@ def plot_wind_rose(dirs,yval,color='blue',alpha=0.25,title=False,titlesize=20,ti
     dirs += 270.
     for i in range(nDirections):
         dirs[i] = np.radians(dirs[i])*-1.
-    bottom = 0
     width = (2*np.pi) / nDirections
     dirs = dirs-width/2.
     max_height = np.max(yval)
     ax = plt.subplot(111, polar=True)
-    bars = ax.bar(dirs, yval, width=width, bottom=bottom, color=color,alpha=alpha)
+    bars = ax.bar(dirs, yval, width=width, bottom=0., color=color,alpha=alpha)
     ax.set_xticklabels(['E', 'NE', 'N', 'NW', 'W', 'SW', 'S', 'SE'],fontsize=dirsize,family=dirfont)
 
     if tics:
@@ -56,9 +57,37 @@ def plot_wind_rose(dirs,yval,color='blue',alpha=0.25,title=False,titlesize=20,ti
     plt.pause(0.001)
 
 
+
+
+def plot_turbine_locations(turbineX,turbineY,rotorDiameter,\
+                           facecolor='blue',alpha=0.25,\
+                           farm_radius=False,farm_bounds=False):
+    """plot the turbine layouts"""
+
+    nTurbines = len(turbineX)
+    for i in range(nTurbines):
+        turbine = plt.Circle((turbineX[i],turbineY[i]),rotorDiameter[i]/2.,fc=facecolor,alpha=alpha,lw=0.)
+        plt.gca().add_patch(turbine)
+    if farm_radius:
+        farm_boundary = plt.Circle((0,0),farm_radius,linestyle='dashed',facecolor='none')
+        plt.gca().add_patch(farm_boundary)
+    plt.axis('equal')
+
+    if farm_bounds:
+        plt.axis(farm_bounds)
+    elif farm_radius:
+        plt.xlim(-farm_radius-2.*rotorDiameter[0],farm_radius+2.*rotorDiameter[0])
+        plt.ylim(-farm_radius-2.*rotorDiameter[0],farm_radius+2.*rotorDiameter[0])
+    else:
+        plt.xlim(min(turbineX)-2.*rotorDiameter[0],max(turbineX)+2.*rotorDiameter[0])
+        plt.ylim(min(turbineY)-2.*rotorDiameter[0],max(turbineY)+2.*rotorDiameter[0])
+    plt.draw()
+    plt.pause(0.001)
+
+
 if __name__=="__main__":
-    
-    # """test wind rose"""
+
+    """test wind rose"""
     # wf = np.array([1.17812570e-02, 1.09958570e-02, 9.60626600e-03, 1.21236860e-02,
     #                            1.04722450e-02, 1.00695140e-02, 9.68687400e-03, 1.00090550e-02,
     #                            1.03715390e-02, 1.12172280e-02, 1.52249700e-02, 1.56279300e-02,
@@ -92,3 +121,10 @@ if __name__=="__main__":
     #                     # tics=tics,ticangle=ticangle,ticlabels=ticlabels,ticsize=18,ticfont='serif',dirsize=20,dirfont='serif')
     #
     # plt.show()
+
+    turbineX = np.array([0.,0.,0.,500.,500.,500.,1000.,1000.,1000.])
+    turbineY = np.array([0.,500.,1000.,0.,500.,1000.,0.,500.,1000.])
+    rotorDiameter = np.ones(len(turbineX))*100.
+    edgecolor='black'
+    plot_turbine_locations(turbineX,turbineY,rotorDiameter,facecolor='red',farm_radius=1000.*np.sqrt(2))
+    plt.show()
