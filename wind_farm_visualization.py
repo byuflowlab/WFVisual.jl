@@ -59,28 +59,82 @@ def plot_wind_rose(dirs,yval,color='blue',alpha=0.25,title=False,titlesize=20,ti
 
 
 
-def plot_turbine_locations(turbineX,turbineY,rotorDiameter,\
-                           facecolor='blue',alpha=0.25,\
-                           farm_radius=False,farm_bounds=False):
-    """plot the turbine layouts"""
+def plot_turbine_locations(turbineX,turbineY,rotorDiameter,color='blue',alpha=0.25,title=False,titlesize=20,titlefont='serif',\
+                           starting=False,startingX=False,startingY=False,starting_color='red',staring_alpha=0.25,lines=False,linecolor='black',linestyle='solid',\
+                           circle_boundary=False,farm_radius=False,farm_center=(0.,0.),\
+                           custom_boundary=False,boundaryX=False,boundaryY=False,
+                           boundary_color='black',boundary_line='dashed',boundary_width=1,farm_bounds=False):
+
+    """plot wind farm layouts.
+    must save figure outside of this function
+    must call plt.show() if you want the figure to remain shown when the program ends
+
+    INPUTS
+    ______________________________________________________________________________
+    turbineX: numpy array of x locations
+    turbineY: numpy array of y locations
+    rotorDiameter: numpy array of turbine rotor diameters
+
+    color: color of turbines, default pyplot colors (string) or custom RBG values (float)
+    alpha: transparancy of the turbines as a float as a float
+    title: plot title as a string. This must be active for the other title options to work
+    titlesize: title font size as a float
+    titlefont: title font family
+    starting: True if you want to compare the starting locations to final locations
+    startingX: numpy array of starting x locations
+    startingY: numpy array of starting y locations
+    starting_color: color of starting turbines, default pyplot colors (string) or custom RBG values (float)
+    staring_alpha: transparancy of the starting turbines as a float as a float
+    lines: True if you want lines connecting each starting turbine to its final location
+    linecolor: color or lines connecting turibnes
+    linestyle: style of lines connecting turbines
+    circle_boundary: True if you want to display a circular wind farm boundary
+    farm_radius: circular wind farm boundary radius (float)
+    farm_center: circular wind farm boundary center (x,y)
+    custom_boundary: True if you want to define a custom wind farm boundary
+    boundaryX: numpy array of x values for a custom wind farm boundary
+    boundaryY: numpy array of y values for a custom wind farm boundary
+    boundary_color: color of the wind farm boundary
+    boundary_line: line style of the wind farm boundary
+    boundary_width: line width of the wind farm boundary
+    farm_bounds: custom axis bounds on the plot (xmin,xmax,ymin,ymax)
+    """
+
 
     nTurbines = len(turbineX)
     for i in range(nTurbines):
-        turbine = plt.Circle((turbineX[i],turbineY[i]),rotorDiameter[i]/2.,fc=facecolor,alpha=alpha,lw=0.)
-        plt.gca().add_patch(turbine)
-    if farm_radius:
-        farm_boundary = plt.Circle((0,0),farm_radius,linestyle='dashed',facecolor='none')
-        plt.gca().add_patch(farm_boundary)
-    plt.axis('equal')
+        if starting:
+            opt_turbine = plt.Circle((startingX[i],startingY[i]),rotorDiameter[i]/2.,fc=starting_color,alpha=staring_alpha,lw=0.)
+            plt.gca().add_patch(opt_turbine)
+            if lines:
+                plt.plot(np.array([startingX[i],turbineX[i]]),np.array([startingY[i],turbineY[i]]),color=linecolor,linestyle=linestyle)
 
+        turbine = plt.Circle((turbineX[i],turbineY[i]),rotorDiameter[i]/2.,fc=color,alpha=alpha,lw=0.)
+        plt.gca().add_patch(turbine)
+
+    if circle_boundary:
+        farm_boundary = plt.Circle(farm_center,farm_radius,linestyle=boundary_line,fc='none',edgecolor=boundary_color,linewidth=boundary_width)
+        plt.gca().add_patch(farm_boundary)
+    elif custom_boundary:
+        plt.plot(boundaryX,boundaryY,color=boundary_color,linestyle=boundary_line,linewidth=boundary_width)
+
+
+    """limits on the axes"""
+    plt.axis('equal')
     if farm_bounds:
         plt.axis(farm_bounds)
-    elif farm_radius:
-        plt.xlim(-farm_radius-2.*rotorDiameter[0],farm_radius+2.*rotorDiameter[0])
-        plt.ylim(-farm_radius-2.*rotorDiameter[0],farm_radius+2.*rotorDiameter[0])
+    elif circle_boundary:
+        plt.xlim(farm_center[0]-farm_radius-2.*rotorDiameter[0],farm_center[0]+farm_radius+2.*rotorDiameter[0])
+        plt.ylim(farm_center[1]-farm_radius-2.*rotorDiameter[0],farm_center[1]+farm_radius+2.*rotorDiameter[0])
     else:
         plt.xlim(min(turbineX)-2.*rotorDiameter[0],max(turbineX)+2.*rotorDiameter[0])
         plt.ylim(min(turbineY)-2.*rotorDiameter[0],max(turbineY)+2.*rotorDiameter[0])
+
+    if title:
+        plt.title(title,fontsize=titlesize,family=titlefont)
+
+    plt.axis('off')
+    plt.tight_layout()
     plt.draw()
     plt.pause(0.001)
 
@@ -122,9 +176,14 @@ if __name__=="__main__":
     #
     # plt.show()
 
+
+    """test layout plot"""
     turbineX = np.array([0.,0.,0.,500.,500.,500.,1000.,1000.,1000.])
-    turbineY = np.array([0.,500.,1000.,0.,500.,1000.,0.,500.,1000.])
+    turbineY = np.array([0.,500.,1000.,0.,500.,1200.,0.,500.,1000.])
+    startingX = np.array([0.,0.,0.,500.,500.,500.,1000.,1000.,1000.])+np.random.rand(len(turbineX))*100.
+    startingY = np.array([0.,500.,1000.,0.,500.,1200.,0.,500.,1000.])+np.random.rand(len(turbineX))*100.
     rotorDiameter = np.ones(len(turbineX))*100.
-    edgecolor='black'
-    plot_turbine_locations(turbineX,turbineY,rotorDiameter,facecolor='red',farm_radius=1000.*np.sqrt(2))
+    plot_turbine_locations(turbineX,turbineY,rotorDiameter,starting=True,startingX=startingX,startingY=startingY,color='blue',lines=True,circle_boundary=True,farm_radius=1000.*np.sqrt(2))
+    plt.show()
+    plot_turbine_locations(turbineX,turbineY,rotorDiameter)
     plt.show()
