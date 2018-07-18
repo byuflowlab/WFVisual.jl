@@ -29,7 +29,7 @@ function generate_windfarm(D::Array{T,1}, H::Array{T,1}, N::Array{Int64,1},
                           spl_s=0.001, spl_k="automatic",
                           # FILE OPTIONS
                           save_path=nothing, file_name="mywindfarm",
-                          paraview=true
+                          paraview=true, num=nothing
                          ) where{T<:Real}
 
   windfarm = generate_layout(D, H, N, x, y, z, glob_yaw;
@@ -55,9 +55,9 @@ function generate_windfarm(D::Array{T,1}, H::Array{T,1}, N::Array{Int64,1},
 
 
   if save_path!=nothing
-    gt.save(windfarm, file_name; path=save_path)
-    gt.save(perimeter_grid, file_name*"_perimeter"; path=save_path)
-    gt.save(fdom, file_name*"_fdom"; path=save_path)
+    gt.save(windfarm, file_name; path=save_path, num=num)
+    gt.save(perimeter_grid, file_name*"_perimeter"; path=save_path, num=num)
+    gt.save(fdom, file_name*"_fdom"; path=save_path, num=num)
 
     if paraview
       strn = ""
