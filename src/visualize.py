@@ -1,9 +1,10 @@
 import numpy as np
 from _porteagel_fortran import porteagel_visualize as porteagel_visualize_fortran
+import julia
+# import WFVisual as wfv
 
-def boundary_points_function(nPoints,boundary_type='circle',boundary_radius=1500.,boundary_center=(0.,0.)):
-    if nPoints%2==1:
-        nPoints+=1
+
+def boundary_points_function(nPoints,boundary_type='circle',boundary_radius=1500.,boundary_center=(0.,0.),boundary_edge=1200.):
 
     if boundary_type=='circle':
         centerX = boundary_center[0]
@@ -19,6 +20,37 @@ def boundary_points_function(nPoints,boundary_type='circle',boundary_radius=1500
             boundaryPoints[i][2] = zpoints[i]
         return boundaryPoints
 
+    if boundary_type=='square':
+        centerX = boundary_center[0]
+        centerY = boundary_center[1]
+        half_edge = boundary_edge/2.
+        n = nPoints/4
+        d = boundary_edge/float(n)
+        xpoints = np.zeros(4*n)
+        ypoints = np.zeros(4*n)
+        zpoints = np.zeros(4*n)
+
+        xpoints[0:n] = centerX - half_edge
+        ypoints[0:n] = np.linspace(centerY-half_edge,centerY+half_edge-d,n)
+        xpoints[n:2*n] = np.linspace(centerX-half_edge,centerX+half_edge-d,n)
+        ypoints[n:2*n] = centerY + half_edge
+        xpoints[2*n:3*n] = centerX + half_edge
+        ypoints[2*n:3*n] = np.linspace(centerY+half_edge,centerY-half_edge+d,n)
+        xpoints[3*n:4*n] = np.linspace(centerX+half_edge,centerX-half_edge+d,n)
+        ypoints[3*n:4*n] = centerY - half_edge
+
+        boundaryPoints = np.zeros((nPoints,3))
+        for i in range(nPoints):
+            boundaryPoints[i][0] = xpoints[i]
+            boundaryPoints[i][1] = ypoints[i]
+            boundaryPoints[i][2] = zpoints[i]
+        boundaryPoints = np.append(boundaryPoints,boundaryPoints[0])
+        return boundaryPoints
+
+
+def boundary_points_function2(nPoints,boundary_type='circle',boundary_radius=1500.,boundary_center=np.array([0.,0.,0.])):
+
+    return [np.array([boundary_radius*np.cos(a), boundary_radius*np.sin(a), 0])-boundary_center for a in np.linspace(0, 2*np.pi, nPoints)]
 
 
 def WindFrame(wind_direction, turbineX, turbineY):
@@ -37,13 +69,14 @@ def WindFrame(wind_direction, turbineX, turbineY):
     return turbineXw, turbineYw
 
 
-
 def call_julia_visualize(turbineX,turbineY,turbineZ,rotorDiameter,hubHeight,nBlades,wind_direction,wind_speed,
-                            yaw,boundaryPoints,wake_model='gaussian',args=False):
+                            yaw,boundaryPoints,wake_model='gaussian',args=False,nDIVS=np.array([100,100,100],dtype=int),save_path="/Users/ningrsrch/Dropbox/Projects/wind-farm-utilities/temps"):
+    print 'starting call_julia_visualize'
     nTurbines = len(turbineX)
-    globalYaw = yaw-wind_direction
+    globalYaw = (-yaw+wind_direction)+90.
     turbineXw,turbineYw = WindFrame(wind_direction,turbineX,turbineY)
     sorted_x_idx = np.argsort(turbineXw, kind='heapsort')
+
     if wake_model=='gaussian':
         if args:
             Ct,ky,kz,alpha,beta,I,RotorPointsY,RotorPointsZ,z_ref,z_0,shear_exp,wake_combination_method,\
@@ -70,6 +103,7 @@ def call_julia_visualize(turbineX,turbineY,turbineZ,rotorDiameter,hubHeight,nBla
             ct_curve_wind_speed = np.ones(nTurbines)*wind_speed
             ct_curve_ct = np.ones(nTurbines)*8./9.
 
+        print 'defining wrapped wake model'
         def wrapped_wake_model(loc):
             velX,velY = WindFrame(wind_direction, loc[0], loc[1])
             velZ = loc[2]
@@ -80,10 +114,80 @@ def call_julia_visualize(turbineX,turbineY,turbineZ,rotorDiameter,hubHeight,nBla
                                                            z_ref, z_0, shear_exp, velX, velY, velZ, wake_combination_method,
                                                            ti_calculation_method, calc_k_star, opt_exp_fac, wake_model_version,
                                                            interp_type, use_ct_curve, ct_curve_wind_speed, ct_curve_ct)
-            return ws_array
 
-        # x = 280.
-        # y = 230.
+            wind_direction_rad = np.deg2rad(270.-wind_direction)
+            s = ws_array[0]
+            x = s*np.cos(wind_direction_rad)
+            y = s*np.sin(wind_direction_rad)
+            z = 0.
+            return np.array([x,y,z])
+
+        def dummy_func(loc):
+            return np.array([1.,1.,1.])
+
+
+    nDIVSx = nDIVS[0]
+    nDIVSy = nDIVS[1]
+    nDIVSz = nDIVS[2]
+    print 'calling pyJulia'
+    j = julia.Julia()
+    # print 'include WFVisual'
+    # generate_windfarm = j.include("WFVisual.jl")
+    print 'set path'
+    j.eval('include("/Users/ningrsrch/Dropbox/Projects/wind-farm-utilities/src/WFVisual.jl")')
+    print 'using'
+    j.using("WFVisual")
+    # print 'rotorDiameter: ', rotorDiameter
+    # print 'hubHeight: ', hubHeight
+    # print 'nBlades: ', nBlades
+    # print 'turbineX: ', turbineX
+    # print 'turbineY: ', turbineY
+    # print 'turbineZ: ', turbineZ
+    # print 'globalYaw: ', globalYaw
+    # print 'boundaryPoints: ', boundaryPoints
+    # X = np.array([rotorDiameter, hubHeight, nBlades, turbineX, turbineY, turbineZ,globalYaw, boundaryPoints, dummy_func])
+    print 'run function'
+
+    perimeter = [ [p for p in point] for point in boundaryPoints]
+
+    # print 'perimeter: ', perimeter
+
+    # X = [1.0, 180.0, 1.0]
+    # Y = [0.2, 0.3, 0.9, 1.9]
+    # Xout = j.dummyfun(X,Y)
+    # print(Xout)
+
+    # j.dummyfun2(rotorDiameter, hubHeight, nBlades, turbineX, turbineY, turbineZ,globalYaw, perimeter)
+
+    # print X
+    # j.generate_windfarm(rotorDiameter, hubHeight, nBlades, turbineX, turbineY, turbineZ,globalYaw, perimeter,save_path=save_path)
+    j.generate_windfarm(rotorDiameter, hubHeight, nBlades, turbineX, turbineY, turbineZ,globalYaw, perimeter, wrapped_wake_model, save_path=save_path)
+    # j.generate_windfarm((rotorDiameter), (hubHeight), (nBlades), (turbineX), (turbineY), (turbineZ),(globalYaw), (boundaryPoints), dummy_func)
+    # j.eval('import WFVisual')
+    # j.eval('WFVisual.generate_windfarm')
+    # print 'WFVisual: ', WFVisual
+    # j.include("/Users/ningrsrch/Dropbox/Projects/wind-farm-utilities/src/WFVisual.jl")
+    # print 'import WFVisual '
+    # j.eval("importall WFVisual")
+    # generate_windfarm = j.eval("generate_windfarm")
+
+    # print rotorDiameter, hubHeight, nBlades, turbineX, turbineY, turbineZ,\
+    #                               globalYaw, boundaryPoints,\
+    #                               wrapped_wake_model
+    # print 'wrapped_wake_model: ', wrapped_wake_model
+    # print 'call generate_windfarm'
+    # print generate_windfarm
+    # j.eval("generate_windfarm(rotorDiameter, hubHeight, nBlades, turbineX, turbineY, turbineZ,globalYaw, boundaryPoints,dummy_func)")#,
+                                 # NDIVSx=NDIVSx, NDIVSy=NDIVSy, NDIVSz=NDIVSz,
+                                  #save_path=save_path)
+
+
+        # loc = np.array([0.,0.,100.])
+        # ws = wrapped_wake_model(loc)
+        # print 'vectored speed: ', ws
+        # print 'speed magnitude: ', np.linalg.norm(ws)
+
+        # """quick visualization of the wakes in 2D"""
         # z = 100.
         # resolution = 100
         # x = np.linspace(-2000.,2000.,resolution)

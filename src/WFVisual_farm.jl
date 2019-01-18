@@ -12,73 +12,22 @@
 # WIND FARM
 ################################################################################
 
-function generate_windfarm(D::Array{T,1}, H::Array{T,1}, N::Array{Int64,1},
-                          x::Array{T,1}, y::Array{T,1}, z::Array{T,1},
-                          glob_yaw::Array{T,1}, perimeter::Array{Array{T, 1}, 1},
-                          wake;
-                          # TURBINE GEOMETRY OPTIONS
-                          hub::Array{String,1}=String[],
-                          tower::Array{String,1}=String[],
-                          blade::Array{String,1}=String[],
-                          data_path::String=def_data_path,
-                          # PERIMETER AND FLUID DOMAIN OPTIONS
-                          NDIVSx=50, NDIVSy=50, NDIVSz=50,
-                          z_min="automatic", z_max="automatic",
-                          # PERIMETER SPLINE OPTIONS
-                          verify_spline::Bool=true,
-                          spl_s=0.001, spl_k="automatic",
-                          # FILE OPTIONS
-                          save_path=nothing, file_name="mywindfarm",
-                          paraview=true, num=nothing
-                         ) where{T<:Real}
+# import JLD
+# import CSV
+# import Dierckx
+# import PyPlot
+# using PyCall
+#
+# const plt = PyPlot
 
-  windfarm = generate_layout(D, H, N, x, y, z, glob_yaw;
-                                  hub=hub, tower=tower, blade=blade,
-                                  data_path=data_path, save_path=nothing)
+# ------------ FLOW MODULES ----------------------------------------------------
+# https://github.com/byuflowlab/GeometricTools.jl
+# import GeometricTools
+# const gt = GeometricTools
 
-  perimeter_grid = generate_perimetergrid(perimeter, NDIVSx, NDIVSy, 0;
-                                      verify_spline=verify_spline, spl_s=spl_s,
-                                      spl_k=spl_k, save_path=nothing)
+# include("WFVisual_turbine.jl")
 
-  _zmin = z_min=="automatic" ? 0 : z_min
-  _zmax = z_max=="automatic" ? maximum(H) + 1.25*maximum(D)/2 : z_max
-
-  fdom = generate_perimetergrid(perimeter,
-                                    NDIVSx, NDIVSy, NDIVSz;
-                                    z_min=_zmin, z_max=_zmax,
-                                    verify_spline=false,
-                                    spl_s=spl_s, spl_k=spl_k,
-                                    save_path=nothing,
-                                  )
-
-  gt.calculate_field(fdom, wake, "wake", "vector", "node")
-
-
-  if save_path!=nothing
-    gt.save(windfarm, file_name; path=save_path, num=num)
-    gt.save(perimeter_grid, file_name*"_perimeter"; path=save_path, num=num)
-    gt.save(fdom, file_name*"_fdom"; path=save_path, num=num)
-
-    if paraview
-      strn = ""
-      for i in 1:size(D,1)
-        strn *= file_name*"_turbine$(i)_tower.vtk;"
-        strn *= file_name*"_turbine$(i)_rotor_hub.vtk;"
-        for j in 1:N[i]
-          strn *= file_name*"_turbine$(i)_rotor_blade$(j).vtk;"
-        end
-      end
-
-      strn *= file_name*"_perimeter.vtk;"
-      strn *= file_name*"_fdom.vtk;"
-
-      run(`paraview --data=$save_path/$strn`)
-    end
-
-  end
-
-  return (windfarm, perimeter, fdom)
-end
+using PyCall
 
 """
 `generate_layout(D::Array{T,1}, H::Array{T,1}, N::Array{Int64,1},
@@ -283,4 +232,82 @@ function generate_perimetergrid(perimeter::Array{Array{T, 1}, 1},
 
   return param_grid::gt.Grid
 end
+
+
+
+
+function generate_windfarm(D::Array{T,1}, H::Array{T,1}, N::Array{Int64,1},
+                          x::Array{T,1}, y::Array{T,1}, z::Array{T,1},
+                          glob_yaw::Array{T,1}, _perimeter::Array{T, 2},
+                          wake;
+                          # TURBINE GEOMETRY OPTIONS
+                          hub::Array{String,1}=String[],
+                          tower::Array{String,1}=String[],
+                          blade::Array{String,1}=String[],
+                          data_path::String=def_data_path,
+                          # PERIMETER AND FLUID DOMAIN OPTIONS
+                          NDIVSx=50, NDIVSy=50, NDIVSz=50,
+                          z_min="automatic", z_max="automatic",
+                          # PERIMETER SPLINE OPTIONS
+                          verify_spline::Bool=true,
+                          spl_s=0.001, spl_k="automatic",
+                          # FILE OPTIONS
+                          save_path=nothing, file_name="mywindfarm",
+                          paraview=true, num=nothing
+                         ) where{T<:Real}
+
+  perimeter = M2arr(_perimeter)
+
+  windfarm = generate_layout(D, H, N, x, y, z, glob_yaw;
+                                  hub=hub, tower=tower, blade=blade,
+                                  data_path=data_path, save_path=nothing)
+
+  perimeter_grid = generate_perimetergrid(perimeter, NDIVSx, NDIVSy, 0;
+                                      verify_spline=verify_spline, spl_s=spl_s,
+                                      spl_k=spl_k, save_path=nothing)
+
+  _zmin = z_min=="automatic" ? 0 : z_min
+  _zmax = z_max=="automatic" ? maximum(H) + 1.25*maximum(D)/2 : z_max
+
+  fdom = generate_perimetergrid(perimeter,
+                                    NDIVSx, NDIVSy, NDIVSz;
+                                    z_min=_zmin, z_max=_zmax,
+                                    verify_spline=false,
+                                    spl_s=spl_s, spl_k=spl_k,
+                                    save_path=nothing,
+                                  )
+
+  gt.calculate_field(fdom, wake, "wake", "vector", "node")
+
+
+  if save_path!=nothing
+    gt.save(windfarm, file_name; path=save_path, num=num)
+    gt.save(perimeter_grid, file_name*"_perimeter"; path=save_path, num=num)
+    gt.save(fdom, file_name*"_fdom"; path=save_path, num=num)
+
+    if paraview
+      strn = ""
+      for i in 1:size(D,1)
+        strn *= file_name*"_turbine$(i)_tower.vtk;"
+        strn *= file_name*"_turbine$(i)_rotor_hub.vtk;"
+        for j in 1:N[i]
+          strn *= file_name*"_turbine$(i)_rotor_blade$(j).vtk;"
+        end
+      end
+
+      strn *= file_name*"_perimeter.vtk;"
+      strn *= file_name*"_fdom.vtk;"
+
+      run(`paraview --data=$save_path/$strn`)
+    end
+
+  end
+
+  return (windfarm, perimeter, fdom)
+end
+
+function M2arr(M::Array{T, 2}) where{T<:Real}
+  return [ [p for p in M[i, :]] for i in 1:size(M,1) ]
+end
+
 # ------------ END OF WIND FARM ------------------------------------------------

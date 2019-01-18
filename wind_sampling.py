@@ -68,6 +68,10 @@ def sample_wind_rose(nDirections,dirData,freqData,speedData,num_int=500):
 
     return dirs, frequencies, speeds
 
+
+
+
+
 if __name__=="__main__":
     windSpeeds = np.array([6.53163342, 6.11908394, 6.13415514, 6.0614625,  6.21344602,
                                 5.87000793, 5.62161519, 5.96779107, 6.33589422, 6.4668016,
