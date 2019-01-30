@@ -1,5 +1,6 @@
 import numpy as np
 from _porteagel_fortran import porteagel_visualize as porteagel_visualize_fortran
+from FLORISSE3D import _floris
 import julia
 # import WFVisual as wfv
 
@@ -76,6 +77,15 @@ def call_julia_visualize(turbineX,turbineY,turbineZ,rotorDiameter,hubHeight,nBla
     globalYaw = (-yaw+wind_direction)+90.
     turbineXw,turbineYw = WindFrame(wind_direction,turbineX,turbineY)
     sorted_x_idx = np.argsort(turbineXw, kind='heapsort')
+
+    if wake_model=='floris':
+        _, wsArray, _, _, _, _ = \
+                      _floris.floris(turbineXw, turbineYw, turbineZ, yawDeg, rotorDiameter, Vinf,
+                                                                  Ct, axialInduction, ke, kd, me, initialWakeDisplacement, bd,
+                                                                  MU, aU, bU, initialWakeAngle, cos_spread, keCorrCT,
+                                                                  Region2CT, keCorrArray, useWakeAngle,
+                                                                  adjustInitialWakeDiamToYaw, axialIndProvided, useaUbU, wsPositionXYZw,
+                                                                  shearCoefficientAlpha, shearZh)
 
     if wake_model=='gaussian':
         if args:
