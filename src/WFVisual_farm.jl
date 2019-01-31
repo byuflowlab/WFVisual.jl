@@ -172,33 +172,78 @@ function generate_perimetergrid(perimeter::Array{Array{T, 1}, 1},
   # Separate upper and lower sides to make the contour injective in x
   upper, lower = gt.splitcontour(org_x, org_y)
 
+  # # Parameterize both sides independently
+  # fun_upper = gt.parameterize(upper[1], upper[2], zeros(upper[1]); inj_var=1,
+  #                                                     s=spl_s, kspl=spl_k)
+  # fun_lower = gt.parameterize(lower[1], lower[2], zeros(lower[1]); inj_var=1,
+  #                                                     s=spl_s, kspl=spl_k)
+  # # Discretizes both sides
+  # if NDIVSx==multidiscrtype
+  #   new_upper = gt.multidiscretize(fun_upper, 0, 1, NDIVSx)
+  #   new_lower = gt.multidiscretize(fun_lower, 0, 1, NDIVSx)
+  # else
+  #   new_upper = gt.discretize(fun_upper, 0, 1, NDIVSx, 1.0)
+  #   new_lower = gt.discretize(fun_lower, 0, 1, NDIVSx, 1.0)
+  # end
+
+  splt_up = Int(ceil((size(upper[1],1)/2)))
+  splt_low = Int(ceil((size(lower[1],1)/2)))
+
+  # Splits the perimeter into four faces
+  upper1 = [[x for x in upper[1][1:splt_up]], [y for y in upper[2][1:splt_up]]]
+  upper2 = [[x for x in upper[1][splt_up:end]], [y for y in upper[2][splt_up:end]]]
+  lower1 = [[x for x in lower[1][1:splt_low]], [y for y in lower[2][1:splt_low]]]
+  lower2 = [[x for x in lower[1][splt_low:end]], [y for y in lower[2][splt_low:end]]]
+
   # Parameterize both sides independently
-  fun_upper = gt.parameterize(upper[1], upper[2], zeros(upper[1]); inj_var=1,
+  fun_upper1 = gt.parameterize(upper1[1], upper1[2], zeros(upper1[1]); inj_var=1,
                                                       s=spl_s, kspl=spl_k)
-  fun_lower = gt.parameterize(lower[1], lower[2], zeros(lower[1]); inj_var=1,
+  fun_upper2 = gt.parameterize(upper2[1], upper2[2], zeros(upper2[1]); inj_var=1,
+                                                      s=spl_s, kspl=spl_k)
+  fun_lower1 = gt.parameterize(lower1[1], lower1[2], zeros(lower1[1]); inj_var=1,
+                                                      s=spl_s, kspl=spl_k)
+  fun_lower2 = gt.parameterize(lower2[1], lower2[2], zeros(lower2[1]); inj_var=1,
                                                       s=spl_s, kspl=spl_k)
   # Discretizes both sides
   if NDIVSx==multidiscrtype
-    new_upper = gt.multidiscretize(fun_upper, 0, 1, NDIVSx)
-    new_lower = gt.multidiscretize(fun_lower, 0, 1, NDIVSx)
+    new_upper1 = gt.multidiscretize(fun_upper1, 0, 1, NDIVSx)
+    new_upper2 = gt.multidiscretize(fun_upper2, 0, 1, NDIVSy)
+    new_lower1 = gt.multidiscretize(fun_lower1, 0, 1, NDIVSy)
+    new_lower2 = gt.multidiscretize(fun_lower2, 0, 1, NDIVSx)
   else
-    new_upper = gt.discretize(fun_upper, 0, 1, NDIVSx, 1.0)
-    new_lower = gt.discretize(fun_lower, 0, 1, NDIVSx, 1.0)
+    new_upper1 = gt.discretize(fun_upper1, 0, 1, NDIVSx, 1.0)
+    new_upper2 = gt.discretize(fun_upper2, 0, 1, NDIVSy, 1.0)
+    new_lower1 = gt.discretize(fun_lower1, 0, 1, NDIVSy, 1.0)
+    new_lower2 = gt.discretize(fun_lower2, 0, 1, NDIVSx, 1.0)
   end
-
 
   # ----------------- SPLINE VERIFICATION --------------------------------------
   if verify_spline
-    new_points = vcat(reverse(new_upper), new_lower)
+  #   new_points = vcat(reverse(new_upper), new_lower)
+    # new_x = [p[1] for p in new_points]
+    # new_y = [p[2] for p in new_points]
+    plt.plot(org_x, org_y, "--^k", label="Original", alpha=0.5)
+    # plt.plot(new_x, new_y, ":.b", label="Parameterized")
+
+    plt.plot(upper1[1], upper1[2], "*b", label="upper1", alpha=0.75)
+    plt.plot(upper2[1], upper2[2], "^b", label="upper2", alpha=0.75)
+    plt.plot(lower1[1], lower1[2], "*r", label="lower1", alpha=0.75)
+    plt.plot(lower2[1], lower2[2], "^r", label="lower2", alpha=0.75)
+
+    new_points = vcat(new_upper1, new_upper2)
     new_x = [p[1] for p in new_points]
     new_y = [p[2] for p in new_points]
-    plt.plot(org_x, org_y, "--^k", label="Original", alpha=0.5)
-    plt.plot(new_x, new_y, ":.b", label="Parameterized")
+    plt.plot(new_x, new_y, ":.b", label="Parameterized Upper", alpha=0.75)
+    new_points = vcat(new_lower1, new_lower2)
+    new_x = [p[1] for p in new_points]
+    new_y = [p[2] for p in new_points]
+    plt.plot(new_x, new_y, ":.r", label="Parameterized Lower", alpha=0.75)
     plt.xlabel(plt.L"x")
     plt.ylabel(plt.L"y")
     plt.legend(loc="best")
     plt.grid(true, color="0.8", linestyle="--")
   end
+
 
   # --------- GRIDS THE INSIDE OF THE PERIMETER ---------------------
   # Parametric grid
@@ -206,12 +251,39 @@ function generate_perimetergrid(perimeter::Array{Array{T, 1}, 1},
   P_max = [1, 1, 1*(nz!=0)]
   param_grid = gt.Grid(P_min, P_max, [NDIVSx, NDIVSy, NDIVSz])
 
+  # function my_space_transform(X, ind)
+  #     i = ind[1]                      # Arc length point
+  #     w = X[2]                        # Weight
+  #     z = z_min + X[3]*(z_max-z_min)  # z-position
+  #
+  #     Y = new_lower[i] + w*(new_upper[i]-new_lower[i])
+  #     Y[3] = z
+  #
+  #     return Y
+  # end
+
+  rev_new_upper1 = reverse(new_upper1)
+  rev_new_upper2 = reverse(new_upper2)
+  rev_new_lower1 = reverse(new_lower1)
+  rev_new_lower2 = reverse(new_lower2)
+
   function my_space_transform(X, ind)
-      i = ind[1]                      # Arc length point
-      w = X[2]                        # Weight
       z = z_min + X[3]*(z_max-z_min)  # z-position
 
-      Y = new_lower[i] + w*(new_upper[i]-new_lower[i])
+      xw = X[2]                # x weight
+      yw = X[1]                # y weight
+
+      x = new_upper1[ind[1]]*xw + new_lower2[ind[1]]*(1-xw)
+      y = rev_new_upper2[ind[2]]*yw + rev_new_lower1[ind[2]]*(1-yw)
+      # Y = x + y
+
+      yw = abs(X[1]-0.5)/0.5
+      yw = tan(yw*pi/2 - 1e-2)/tan(pi/2 - 1e-2)
+      xw = abs(X[2]-0.5)/0.5
+      xw = tan(xw*pi/2 - 1e-2)/tan(pi/2 - 1e-2)
+      w = ( (1-xw) + yw ) /2
+      Y = x*(1-w) + y*w
+
       Y[3] = z
 
       return Y
