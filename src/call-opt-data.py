@@ -82,4 +82,4 @@ if __name__=="__main__":
         x_r = np.cos(a)*x[i] - np.sin(a)*y[i]
         y_r = np.sin(a)*x[i] + np.cos(a)*y[i]
         call_julia_visualize(x_r,y_r,turbine_z,d[i],z[i],nBlades,wind_direction,wind_speed,
-                                yaw,boundary_points,num=i,wake_model='gaussian',nDIVS=np.array([100,100,25],dtype=int),save_path="/Users/ningrsrch/Dropbox/Projects/wind-farm-utilities/opt")
+                                yaw,boundary_points,num=i,wake_model='gaussian',nDIVS=np.array([25,25,25],dtype=int),save_path="/Users/ningrsrch/Dropbox/Projects/wind-farm-utilities/opt2")
