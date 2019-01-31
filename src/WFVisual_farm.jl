@@ -168,7 +168,6 @@ function generate_perimetergrid(perimeter::Array{Array{T, 1}, 1},
   # --------- REPARAMETERIZES THE PERIMETER ---------------------------
   org_x = [p[1] for p in perimeter]
   org_y = [p[2] for p in perimeter]
-
   # Separate upper and lower sides to make the contour injective in x
   upper, lower = gt.splitcontour(org_x, org_y)
 
@@ -218,6 +217,7 @@ function generate_perimetergrid(perimeter::Array{Array{T, 1}, 1},
   end
 
   # ----------------- SPLINE VERIFICATION --------------------------------------
+
   if verify_spline
   #   new_points = vcat(reverse(new_upper), new_lower)
     # new_x = [p[1] for p in new_points]
@@ -327,9 +327,7 @@ function generate_windfarm(D::Array{T,1}, H::Array{T,1}, N::Array{Int64,1},
                           save_path=nothing, file_name="mywindfarm",
                           paraview=true, num=nothing
                          ) where{T<:Real}
-
   perimeter = M2arr(_perimeter)
-
   windfarm = generate_layout(D, H, N, x, y, z, glob_yaw;
                                   hub=hub, tower=tower, blade=blade,
                                   data_path=data_path, save_path=nothing)
@@ -340,7 +338,6 @@ function generate_windfarm(D::Array{T,1}, H::Array{T,1}, N::Array{Int64,1},
 
   _zmin = z_min=="automatic" ? 0 : z_min
   _zmax = z_max=="automatic" ? maximum(H) + 1.25*maximum(D)/2 : z_max
-
   fdom = generate_perimetergrid(perimeter,
                                     NDIVSx, NDIVSy, NDIVSz;
                                     z_min=_zmin, z_max=_zmax,
@@ -348,6 +345,7 @@ function generate_windfarm(D::Array{T,1}, H::Array{T,1}, N::Array{Int64,1},
                                     spl_s=spl_s, spl_k=spl_k,
                                     save_path=nothing,
                                   )
+
 
   gt.calculate_field(fdom, wake, "wake", "vector", "node")
 

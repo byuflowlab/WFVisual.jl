@@ -1,5 +1,6 @@
 import numpy as np
 from _porteagel_fortran import porteagel_visualize as porteagel_visualize_fortran
+import _floris
 import julia
 # import WFVisual as wfv
 
@@ -39,13 +40,16 @@ def boundary_points_function(nPoints,boundary_type='circle',boundary_radius=1500
         xpoints[3*n:4*n] = np.linspace(centerX+half_edge,centerX-half_edge+d,n)
         ypoints[3*n:4*n] = centerY - half_edge
 
-        boundaryPoints = np.zeros((nPoints,3))
+        boundaryPoints = np.zeros((nPoints+1,3))
         for i in range(nPoints):
             boundaryPoints[i][0] = xpoints[i]
             boundaryPoints[i][1] = ypoints[i]
             boundaryPoints[i][2] = zpoints[i]
-        boundaryPoints = np.append(boundaryPoints,boundaryPoints[0])
+        boundaryPoints[-1][:] = boundaryPoints[0][:]
         return boundaryPoints
+
+
+# def boundary_square(nPoints)
 
 
 def boundary_points_function2(nPoints,boundary_type='circle',boundary_radius=1500.,boundary_center=np.array([0.,0.,0.])):
@@ -70,12 +74,86 @@ def WindFrame(wind_direction, turbineX, turbineY):
 
 
 def call_julia_visualize(turbineX,turbineY,turbineZ,rotorDiameter,hubHeight,nBlades,wind_direction,wind_speed,
-                            yaw,boundaryPoints,wake_model='gaussian',args=False,nDIVS=np.array([100,100,100],dtype=int),save_path="/Users/ningrsrch/Dropbox/Projects/wind-farm-utilities/temps"):
+                            yaw,boundaryPoints,num=0,wake_model='gaussian',args=False,nDIVS=np.array([200,200,25],dtype=int),save_path="/Users/ningrsrch/Dropbox/Projects/wind-farm-utilities/temps"):
     print 'starting call_julia_visualize'
     nTurbines = len(turbineX)
     globalYaw = (-yaw+wind_direction)+90.
     turbineXw,turbineYw = WindFrame(wind_direction,turbineX,turbineY)
     sorted_x_idx = np.argsort(turbineXw, kind='heapsort')
+
+    if wake_model=='floris':
+        print 'defining floris wrapped wake model'
+
+        def wrapped_wake_model(loc):
+            yaw=False
+            Ct=False
+            kd=0.15
+            bd=-0.01
+            initialWakeDisplacement=-4.5
+            useWakeAngle=False
+            initialWakeAngle=1.5
+            ke=0.065
+            adjustInitialWakeDiamToYaw=False
+            MU=np.array([0.5, 1.0, 5.5])
+            useaUbU=True
+            aU=5.0
+            bU=1.66
+            me=np.array([-0.5, 0.22, 1.0])
+            cos_spread=1.e+12
+            Region2CT=0.888888888889
+            axialInduction=False
+            keCorrCT=0.0
+            keCorrArray=0.0
+            axialIndProvided=True
+            shearCoefficientAlpha=0.10805
+            shearZh=50.
+
+            """wind shear"""
+            Uref = wind_speed
+            z = hubHeight
+            zref = 50.
+            z0 = 0.
+            shearExp = 0.08
+
+            windSpeeds = np.zeros(nTurbines)+wind_speed
+
+            # for turbine_id in range(nTurbines):
+            #     windSpeeds[turbine_id] = Uref*((z[turbine_id]-z0)/(zref-z0))**shearExp
+
+            """floris wake model"""
+            velX,velY = WindFrame(wind_direction, loc[0], loc[1])
+            velZ = loc[2]
+
+            if yaw == False:
+                yaw = np.zeros(nTurbines)
+            if axialInduction == False:
+                axialInduction = np.ones(nTurbines)*1./3.
+            if Ct == False:
+                Ct = np.ones(nTurbines)*4.0*1./3.*(1.0-1./3.)
+
+            # yaw wrt wind dir.
+            yawDeg = yaw
+
+            # wsPositionXYZw = np.zeros([3, nSamples])
+            velX,velY = WindFrame(wind_direction, loc[0], loc[1])
+            velZ = loc[2]
+            wsPositionXYZw = np.array([velX,velY,velZ])
+
+            # call to fortran code to obtain output values
+            _, ws_array, _, _, _, _ = \
+                        _floris.floris(turbineXw, turbineYw, hubHeight, yawDeg, rotorDiameter, windSpeeds,
+                                                       Ct, axialInduction, ke, kd, me, initialWakeDisplacement, bd,
+                                                       MU, aU, bU, initialWakeAngle, cos_spread, keCorrCT,
+                                                       Region2CT, keCorrArray, useWakeAngle,
+                                                       adjustInitialWakeDiamToYaw, axialIndProvided, useaUbU, wsPositionXYZw,
+                                                       shearCoefficientAlpha, shearZh)
+
+            wind_direction_rad = np.deg2rad(270.-wind_direction)
+            s = ws_array[0]
+            x = s*np.cos(wind_direction_rad)
+            y = s*np.sin(wind_direction_rad)
+            z = 0.
+            return np.array([x,y,z])
 
     if wake_model=='gaussian':
         if args:
@@ -103,7 +181,7 @@ def call_julia_visualize(turbineX,turbineY,turbineZ,rotorDiameter,hubHeight,nBla
             ct_curve_wind_speed = np.ones(nTurbines)*wind_speed
             ct_curve_ct = np.ones(nTurbines)*8./9.
 
-        print 'defining wrapped wake model'
+        print 'defining gaussian wrapped wake model'
         def wrapped_wake_model(loc):
             velX,velY = WindFrame(wind_direction, loc[0], loc[1])
             velZ = loc[2]
@@ -126,9 +204,9 @@ def call_julia_visualize(turbineX,turbineY,turbineZ,rotorDiameter,hubHeight,nBla
             return np.array([1.,1.,1.])
 
 
-    nDIVSx = nDIVS[0]
-    nDIVSy = nDIVS[1]
-    nDIVSz = nDIVS[2]
+    nDIVSx = nDIVS[0]/5
+    nDIVSy = nDIVS[1]/5
+    nDIVSz = nDIVS[2]/5
     print 'calling pyJulia'
     j = julia.Julia()
     # print 'include WFVisual'
@@ -161,7 +239,7 @@ def call_julia_visualize(turbineX,turbineY,turbineZ,rotorDiameter,hubHeight,nBla
 
     # print X
     # j.generate_windfarm(rotorDiameter, hubHeight, nBlades, turbineX, turbineY, turbineZ,globalYaw, perimeter,save_path=save_path)
-    j.generate_windfarm(rotorDiameter, hubHeight, nBlades, turbineX, turbineY, turbineZ,globalYaw, perimeter, wrapped_wake_model, save_path=save_path)
+    j.generate_windfarm(rotorDiameter, hubHeight, nBlades, turbineX, turbineY, turbineZ,globalYaw, perimeter, wrapped_wake_model, NDIVSx=nDIVSx, NDIVSy=nDIVSy, NDIVSz=nDIVSz,num=num,save_path=save_path)
     # j.generate_windfarm((rotorDiameter), (hubHeight), (nBlades), (turbineX), (turbineY), (turbineZ),(globalYaw), (boundaryPoints), dummy_func)
     # j.eval('import WFVisual')
     # j.eval('WFVisual.generate_windfarm')
