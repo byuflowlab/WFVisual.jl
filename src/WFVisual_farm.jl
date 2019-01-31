@@ -170,10 +170,7 @@ function generate_perimetergrid(perimeter::Array{Array{T, 1}, 1},
   org_y = [p[2] for p in perimeter]
   # Separate upper and lower sides to make the contour injective in x
   upper, lower = gt.splitcontour(org_x, org_y)
-  println(spl_k)
   #spl_s = 0.1
-  println(upper)
-  println(lower)
   # Parameterize both sides independently
   fun_upper = gt.parameterize(upper[1], upper[2], zeros(upper[1]); inj_var=1,
                                                       s=spl_s, kspl=spl_k)

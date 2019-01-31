@@ -204,9 +204,9 @@ def call_julia_visualize(turbineX,turbineY,turbineZ,rotorDiameter,hubHeight,nBla
             return np.array([1.,1.,1.])
 
 
-    nDIVSx = nDIVS[0]/5
-    nDIVSy = nDIVS[1]/5
-    nDIVSz = nDIVS[2]/5
+    nDIVSx = nDIVS[0]
+    nDIVSy = nDIVS[1]
+    nDIVSz = nDIVS[2]
     print 'calling pyJulia'
     j = julia.Julia()
     # print 'include WFVisual'
@@ -239,7 +239,7 @@ def call_julia_visualize(turbineX,turbineY,turbineZ,rotorDiameter,hubHeight,nBla
 
     # print X
     # j.generate_windfarm(rotorDiameter, hubHeight, nBlades, turbineX, turbineY, turbineZ,globalYaw, perimeter,save_path=save_path)
-    j.generate_windfarm(rotorDiameter, hubHeight, nBlades, turbineX, turbineY, turbineZ,globalYaw, perimeter, wrapped_wake_model, NDIVSx=nDIVSx, NDIVSy=nDIVSy, NDIVSz=nDIVSz,num=num,save_path=save_path)
+    j.generate_windfarm(rotorDiameter, hubHeight, nBlades, turbineX, turbineY, turbineZ,globalYaw, perimeter, wrapped_wake_model, z_max=230., NDIVSx=nDIVSx, NDIVSy=nDIVSy, NDIVSz=nDIVSz,num=num,save_path=save_path)
     # j.generate_windfarm((rotorDiameter), (hubHeight), (nBlades), (turbineX), (turbineY), (turbineZ),(globalYaw), (boundaryPoints), dummy_func)
     # j.eval('import WFVisual')
     # j.eval('WFVisual.generate_windfarm')
