@@ -4,8 +4,8 @@ from visualize import *
 
 
 if __name__=="__main__":
-    small_example = False
-    big_example = True
+    small_example = True
+    big_example = False
     if small_example:
         turbine_x = np.array([0.,0.,0.,500.,500.,500.,1000.,1000.,1000.]) - 500.
         turbine_y = np.array([0.,500.,1000.,0.,500.,1000.,0.,500.,1000.]) - 500.
