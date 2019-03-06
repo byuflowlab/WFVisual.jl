@@ -1,2 +1,4 @@
 temps
 .ipynb_checkpoints
+opt*
+*.pyc
