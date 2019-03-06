@@ -262,26 +262,34 @@ function generate_perimetergrid(perimeter::Array{Array{T, 1}, 1},
   #     return Y
   # end
 
-  rev_new_upper1 = reverse(new_upper1)
-  rev_new_upper2 = reverse(new_upper2)
-  rev_new_lower1 = reverse(new_lower1)
-  rev_new_lower2 = reverse(new_lower2)
+  rev_new_upper1 = reverse(new_upper1) # Left edge
+  rev_new_upper2 = reverse(new_upper2) # Upper edge
+  rev_new_lower1 = reverse(new_lower1) # Lower edge
+  rev_new_lower2 = reverse(new_lower2) # Right edge
 
   function my_space_transform(X, ind)
-      z = z_min + X[3]*(z_max-z_min)  # z-position
+      beta = 1e-2*pi/2                 # Warping parameter
 
-      xw = X[2]                # x weight
-      yw = X[1]                # y weight
+      z = z_min + X[3]*(z_max-z_min)   # z-position
 
-      x = new_upper1[ind[1]]*xw + new_lower2[ind[1]]*(1-xw)
-      y = rev_new_upper2[ind[2]]*yw + rev_new_lower1[ind[2]]*(1-yw)
+      xw = X[2]                        # x weight
+      yw = X[1]                        # y weight
+
+      # Linearly interpolate the edges
+      x = new_upper1[ind[1]]*xw + new_lower2[ind[1]]*(1-xw) # Left-right edges
+      y = rev_new_upper2[ind[2]]*yw + rev_new_lower1[ind[2]]*(1-yw) # Upper-lower edges
       # Y = x + y
 
+      # A clever way of merging the two interpolations
+      # First weight
       yw = abs(X[1]-0.5)/0.5
-      yw = tan(yw*pi/2 - 1e-2)/tan(pi/2 - 1e-2)
+      yw = tan(yw*pi/2 - beta)/tan(pi/2 - beta)
+      # Second weight
       xw = abs(X[2]-0.5)/0.5
-      xw = tan(xw*pi/2 - 1e-2)/tan(pi/2 - 1e-2)
+      xw = tan(xw*pi/2 - beta)/tan(pi/2 - beta)
+      # Merged weight
       w = ( (1-xw) + yw ) /2
+      # Merged point
       Y = x*(1-w) + y*w
 
       Y[3] = z
