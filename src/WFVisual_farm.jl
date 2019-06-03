@@ -328,6 +328,7 @@ function generate_windfarm(D::Array{T,1}, H::Array{T,1}, N::Array{Int64,1},
                           # PERIMETER AND FLUID DOMAIN OPTIONS
                           NDIVSx=50, NDIVSy=50, NDIVSz=50,
                           z_min="automatic", z_max="automatic",
+                          z_off=0.0,
                           # PERIMETER SPLINE OPTIONS
                           verify_spline::Bool=true,
                           spl_s=0.001, spl_k="automatic",
@@ -341,6 +342,7 @@ function generate_windfarm(D::Array{T,1}, H::Array{T,1}, N::Array{Int64,1},
                                   data_path=data_path, save_path=nothing)
 
   perimeter_grid = generate_perimetergrid(perimeter, NDIVSx, NDIVSy, 0;
+                                     z_min=z_off, z_max=z_off,
                                       verify_spline=verify_spline, spl_s=spl_s,
                                       spl_k=spl_k, save_path=nothing)
 
@@ -348,7 +350,7 @@ function generate_windfarm(D::Array{T,1}, H::Array{T,1}, N::Array{Int64,1},
   _zmax = z_max=="automatic" ? maximum(H) + 1.25*maximum(D)/2 : z_max
   fdom = generate_perimetergrid(perimeter,
                                     NDIVSx, NDIVSy, NDIVSz;
-                                    z_min=_zmin, z_max=_zmax,
+                                    z_min=_zmin+z_off, z_max=_zmax+z_off,
                                     verify_spline=false,
                                     spl_s=spl_s, spl_k=spl_k,
                                     save_path=nothing,
