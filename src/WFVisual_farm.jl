@@ -314,11 +314,20 @@ function generate_perimetergrid(perimeter::Array{Array{T, 1}, 1},
 end
 
 
+function generate_windfarm(D::Array{T,1}, H::Array{T,1}, N::Array{Int64,1},
+                          x::Array{T,1}, y::Array{T,1}, z::Array{T,1},
+                          glob_yaw::Array{T,1}, perimeter::Array{T, 2},
+                          wake; optargs...
+                         ) where{T<:Real}
 
+    _perimeter = M2arr(perimeter)
+    return generate_windfarm(D, H, N, x, y, z, glob_yaw, _perimeter, wake;
+                                                                    optargs...)
+end
 
 function generate_windfarm(D::Array{T,1}, H::Array{T,1}, N::Array{Int64,1},
                           x::Array{T,1}, y::Array{T,1}, z::Array{T,1},
-                          glob_yaw::Array{T,1}, _perimeter::Array{T, 2},
+                          glob_yaw::Array{T,1}, perimeter::Array{Array{T, 1}},
                           wake;
                           # TURBINE GEOMETRY OPTIONS
                           hub::Array{String,1}=String[],
@@ -336,7 +345,7 @@ function generate_windfarm(D::Array{T,1}, H::Array{T,1}, N::Array{Int64,1},
                           save_path=nothing, file_name="mywindfarm",
                           paraview=true, num=nothing
                          ) where{T<:Real}
-  perimeter = M2arr(_perimeter)
+
   windfarm = generate_layout(D, H, N, x, y, z, glob_yaw;
                                   hub=hub, tower=tower, blade=blade,
                                   data_path=data_path, save_path=nothing)
