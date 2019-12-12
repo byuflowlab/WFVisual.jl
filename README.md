@@ -1,7 +1,8 @@
 # WFVisual.jl &ndash; Wind Farm Visualizer
 
 Module for the visualization of wind farm layout and wind turbine design optimization.
-See [`docs/geometry_processing.ipynb`](https://nbviewer.jupyter.org/github/byuflowlab/wind-farm-utilities/blob/master/docs/geometry_processing.ipynb) and `examples/simple_windfarm.jl` for an example on how to use this package.
+See [`docs/geometry_processing.ipynb`](https://nbviewer.jupyter.org/github/byuflowlab/wind-farm-utilities/blob/master/docs/geometry_processing.ipynb) and [`examples/simple_windfarm.jl`](https://github.com/byuflowlab/WFVisual.jl/blob/master/examples/simple_windfarm.jl)
+for an example on how to use this package.
 
 <img src="docs/img/spanishfork00.png" alt="Pic here" width="800px">
 <img src="docs/img/spanishfork-aerial00.png" alt="Pic here" width="650px">
@@ -12,8 +13,8 @@ uses to run Julia code) only supports Julia v0.7+. If using WFVisual in
 a purely Julia environment, I'd recommend using Julia v0.6 to save the headache
 of deprication warnings. Also, for some unkown reason, WFVisual runs incredibly
 slow in v0.7+ (for instance, try running the example under
-  `examples/simple_windfarm.jl`). However, if calling the code through Python,
-you'll have to set up WFVisual in Julia v0.7.
+  [`examples/simple_windfarm.jl`](https://github.com/byuflowlab/WFVisual.jl/blob/master/examples/simple_windfarm.jl)).
+However, if calling the code through Python, you'll have to set up WFVisual in Julia v0.7.
 
 To get things running, first install the following dependecies (in v0.6 this is
 done with the commands `Pkg.add("name_of_package")` and
@@ -38,7 +39,7 @@ Pkg.clone("https://github.com/byuflowlab/wind-farm-utilities")
 ```
 in v0.6.
 
-Then you should be able to run the example `examples/simple_windfarm.jl` without
+Then you should be able to run the example [`examples/simple_windfarm.jl`](https://github.com/byuflowlab/WFVisual.jl/blob/master/examples/simple_windfarm.jl) without
 any complications changing the variable `save_path` to the path where you want
 to save the outputs of this example (make sure the path exists, otherwise it
 will throw an error). Notice that this example only takes ~40 seconds to run in
@@ -60,8 +61,8 @@ version that will work both with PyJulia and WFVisual is v0.7, so make sure to
 have this version as your default system `julia` command (or point PyJulia
 manually to it).
 
-The example `examples/simple_windfarm.jl` shows how this package can be called
-from Python 2.7.
+The example [`examples/simple_windfarm_python.py`](https://github.com/byuflowlab/WFVisual.jl/blob/master/examples/simple_windfarm_python.py)
+shows how this package can be called from Python 2.7.
 
 ## Geometry database
 Generating blade, hub, and tower geometries is computationally intensive (it
