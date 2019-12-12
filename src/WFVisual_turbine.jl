@@ -38,8 +38,8 @@ function generate_windturbine(Rtip::Float64, h::Float64, blade_name::String,
                                                     "hub_grid", "Rhub", "Thub")
   tower_grid = JLD.load(joinpath(data_path, tower_name*".jld"), "tower_grid")
   # Scales dimensions by Rtip
-  blade_grid.orggrid.nodes *= Rtip
-  hub_grid.orggrid.nodes *= Rtip
+  blade_grid.orggrid.nodes .*= Rtip
+  hub_grid.orggrid.nodes .*= Rtip
   for i in 1:size(tower_grid.orggrid.nodes, 2)
     # println([Rtip, h, Rtip])
     tower_grid.orggrid.nodes[:, i] .*= [Rtip, h, Rtip]
@@ -352,13 +352,30 @@ function generate_blade(Rtip::Real, Rhub::Real, r_NDIVS::Int64,
     pos = data_airfoil[1][i]
     file_name = blade_name*"_"*data_airfoil[2][i]
 
-    rfl_contour = Array(CSV.read(joinpath(data_path, "airfoils/$file_name")))
+    # rfl_contour = Array(CSV.read(joinpath(data_path, "airfoils/$file_name")))
+    rfl_contour = CSV.read(joinpath(data_path, "airfoils/$file_name"))
+
+    # Convert DataFrames to Arrays
+    rfl_contour = hcat(rfl_contour[1], rfl_contour[2])
+    rfl_contour = [val for val in rfl_contour]
 
     push!(airfoils, (pos, rfl_contour))
   end
 
-  return generate_loft(Rtip, Rhub/Rtip, 1.0, r_NDIVS, Array(data_chord),
-                  Array(data_twist), Array(data_lex), Array(data_lez),
+  # Convert DataFrames to Arrays
+  data_chord = hcat(data_chord[1], data_chord[2])
+  data_twist = hcat(data_twist[1], data_twist[2])
+  data_lex = hcat(data_lex[1], data_lex[2])
+  data_lez = hcat(data_lez[1], data_lez[2])
+
+  # Get rid of the Missing type
+  data_chord = [val for val in data_chord]
+  data_twist = [val for val in data_twist]
+  data_lex = [val for val in data_lex]
+  data_lez = [val for val in data_lez]
+
+  return generate_loft(Rtip, Rhub/Rtip, 1.0, r_NDIVS, data_chord,
+                  data_twist, data_lex, data_lez,
                   airfoils; file_name=blade_name, optargs...)
 end
 # ------------ END OF WIND TURBINE ---------------------------------------------
