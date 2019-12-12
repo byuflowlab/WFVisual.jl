@@ -1,9 +1,10 @@
-# Wind Farm Utilities
+# WFVisual.jl &ndash; Wind Farm Visualizer
 
 Module for the visualization of wind farm layout and wind turbine design optimization.
 See [`docs/geometry_processing.ipynb`](https://nbviewer.jupyter.org/github/byuflowlab/wind-farm-utilities/blob/master/docs/geometry_processing.ipynb) and `examples/simple_windfarm.jl` for an example on how to use this package.
 
 <img src="docs/img/spanishfork00.png" alt="Pic here" width="800px">
+<img src="docs/img/spanishfork-aerial00.png" alt="Pic here" width="650px">
 
 ## Installation
 WFVisual was written in Julia v0.6, however, PyJulia (the package that Python
@@ -76,9 +77,15 @@ overhead of generating the geometry from scratch.
 See the notebook [`docs/geometry_processing.ipynb`](https://nbviewer.jupyter.org/github/byuflowlab/wind-farm-utilities/blob/master/docs/geometry_processing.ipynb) for an example on how to add blades, hubs, and
 towers to the database.
 
+
+## Authorship
+  * Authors   : Eduardo J Alvarez and PJ Stanley
+  * Email     : Edo.AlvarezR@gmail.com
+  * Created   : Jul 2018
+  * License   : MIT License
+
 ## Examples
-<img src="docs/img/spanishfork-aerial00.png" alt="Pic here" width="650px">
-<img src="docs/img/farmexample01.png" alt="Pic here" width="800px">
+<img src="docs/vid/turbine00.gif" alt="Pic here" width="400px">
 <img src="docs/img/jared-side02.png" alt="Pic here" width="800px">
 <img src="docs/img/jared-front00.png" alt="Pic here" width="800px">
 <img src="docs/img/bigjared-aerial01.png" alt="Pic here" width="500px">
