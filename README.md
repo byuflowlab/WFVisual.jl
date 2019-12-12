@@ -89,4 +89,4 @@ towers to the database.
 <img src="docs/vid/turbine00.gif" alt="Pic here" width="800px">
 <img src="docs/img/jared-side02.png" alt="Pic here" width="800px">
 <img src="docs/img/jared-front00.png" alt="Pic here" width="800px">
-<img src="docs/img/bigjared-aerial01.png" alt="Pic here" width="500px">
+<img src="docs/img/bigjared-aerial01.png" alt="Pic here" width="350px">
