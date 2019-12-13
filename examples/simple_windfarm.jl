@@ -9,7 +9,7 @@ module_path = splitdir(@__FILE__)[1]            # Path to this file
 import JLD
 
 # Load WFVisual module
-include(joinpath(module_path, "../src/WFVisual.jl"))
+import WFVisual
 wfv=WFVisual
 
 # Load GeometricTools: https://github.com/byuflowlab/GeometricTools.jl
