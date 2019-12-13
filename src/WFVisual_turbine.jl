@@ -30,7 +30,8 @@ function generate_windturbine(Rtip::Float64, h::Float64, blade_name::String,
                               hub_name::String, tower_name::String;
                               nblades::Int64=3, data_path::String=def_data_path,
                               save_path=nothing, file_name="windturbine",
-                              paraview=true, random_rot::Bool=true)
+                              paraview=true,
+                              rot=nothing, random_rot::Bool=true, pitch=70)
 
   # Read gridded geometries
   blade_grid = JLD.load(joinpath(data_path, blade_name*".jld"), "blade_grid")
@@ -59,7 +60,13 @@ function generate_windturbine(Rtip::Float64, h::Float64, blade_name::String,
   gt.lintransform!(hub_grid, gt.rotation_matrix(0, 90, 0), zeros(3))
   gt.addgrid(rotor, "hub", hub_grid)
 
-  if random_rot
+  # Pitches the blade
+  gt.lintransform!(blade_grid, gt.rotation_matrix(0, -pitch, 0), zeros(3))
+
+  # Rotates the rotor
+  if rot != nothing
+    gt.lintransform!(blade_grid, gt.rotation_matrix(0, 0, rot), zeros(3))
+  elseif random_rot
     gt.lintransform!(blade_grid, gt.rotation_matrix(0, 0, rand()*360), zeros(3))
   end
 
