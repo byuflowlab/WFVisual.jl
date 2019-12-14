@@ -45,6 +45,10 @@ to save the outputs of this example (make sure the path exists, otherwise it
 will throw an error). Notice that this example only takes ~40 seconds to run in
 v0.6, meanwhile it takes about 20 minutes in v0.7.
 
+[`examples/simple_windfarm_gaussianwake.jl`](https://github.com/byuflowlab/WFVisual.jl/blob/master/examples/simple_windfarm_gaussianwake.jl)
+shows an example with an implementation of a gaussian wake model (simplified
+version of the Bastankhah).
+
 NOTE: This package uses Paraview as its visualizer and it will call it with the
 command `run('paraview')` after outputting geometries, so make
 sure Paraview is set up in your system and callable through the command line
