@@ -145,12 +145,11 @@ function generate_perimetergrid(perimeter::Array{Array{T, 1}, 1},
                                   z_min::Real=0, z_max::Real=0,
                                   # SPLINE OPTIONS
                                   verify_spline::Bool=true,
-                                  spl_s=0.001, spl_k="automatic",
+                                  spl_s=0.001, spl_k="automatic", atol=1.0,
                                   # FILE OPTIONS
                                   save_path=nothing, file_name="perimeter",
                                   paraview=true
                                 ) where{T<:Real}
-
   # Error cases
   multidiscrtype = Array{Tuple{Float64,Int64,Float64,Bool},1}
   if typeof(NDIVSx)==Int64
@@ -196,13 +195,13 @@ function generate_perimetergrid(perimeter::Array{Array{T, 1}, 1},
 
   # Parameterize both sides independently
   fun_upper1 = gt.parameterize(upper1[1], upper1[2], zeros(upper1[1]); inj_var=1,
-                                                      s=spl_s, kspl=spl_k)
+                                              s=spl_s, kspl=spl_k, atol=atol)
   fun_upper2 = gt.parameterize(upper2[1], upper2[2], zeros(upper2[1]); inj_var=1,
-                                                      s=spl_s, kspl=spl_k)
+                                              s=spl_s, kspl=spl_k, atol=atol)
   fun_lower1 = gt.parameterize(lower1[1], lower1[2], zeros(lower1[1]); inj_var=1,
-                                                      s=spl_s, kspl=spl_k)
+                                              s=spl_s, kspl=spl_k, atol=atol)
   fun_lower2 = gt.parameterize(lower2[1], lower2[2], zeros(lower2[1]); inj_var=1,
-                                                      s=spl_s, kspl=spl_k)
+                                              s=spl_s, kspl=spl_k, atol=atol)
   # Discretizes both sides
   if NDIVSx==multidiscrtype
     new_upper1 = gt.multidiscretize(fun_upper1, 0, 1, NDIVSx)
@@ -338,6 +337,7 @@ function generate_windfarm(D::Array{T,1}, H::Array{T,1}, N::Array{Int64,1},
                           NDIVSx=50, NDIVSy=50, NDIVSz=50,
                           z_min="automatic", z_max="automatic",
                           z_off=0.0,
+                          fdom_perimeter::Union{Array{Array{T, 1}}, Void}=nothing,
                           # PERIMETER SPLINE OPTIONS
                           verify_spline::Bool=true,
                           spl_s=0.001, spl_k="automatic",
@@ -357,7 +357,7 @@ function generate_windfarm(D::Array{T,1}, H::Array{T,1}, N::Array{Int64,1},
 
   _zmin = z_min=="automatic" ? 0 : z_min
   _zmax = z_max=="automatic" ? maximum(H) + 1.25*maximum(D)/2 : z_max
-  fdom = generate_perimetergrid(perimeter,
+  fdom = generate_perimetergrid(fdom_perimeter != nothing ? fdom_perimeter : perimeter,
                                     NDIVSx, NDIVSy, NDIVSz;
                                     z_min=_zmin+z_off, z_max=_zmax+z_off,
                                     verify_spline=false,
