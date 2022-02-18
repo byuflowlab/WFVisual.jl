@@ -1,0 +1,13 @@
+name = "WFVisual"
+uuid = "8e0d2cc6-7d19-4ae6-9390-8e309051775e"
+authors = ["Eduardo J Alvarez <Edo.AlvarezR@gmail.com>"]
+version = "0.1.0"
+
+[compat]
+julia = "1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
