@@ -102,8 +102,8 @@ function generate_layout(D::Array{T,1}, H::Array{T,1}, N::Array{Int64,1},
     gt.addgrid(windfarm, "turbine$i", turbine)
   end
 
-  if save_path!=nothing
-    gt.save(windfarm, file_name; path=save_path)
+  if save_path!==nothing
+    gt.save(windfarm, file_name; path=save_path, format="vtk")
 
     if paraview
       strn = ""
@@ -194,13 +194,13 @@ function generate_perimetergrid(perimeter::Array{Array{T, 1}, 1},
   lower2 = [[x for x in lower[1][splt_low:end]], [y for y in lower[2][splt_low:end]]]
 
   # Parameterize both sides independently
-  fun_upper1 = gt.parameterize(upper1[1], upper1[2], zeros(upper1[1]); inj_var=1,
+  fun_upper1 = gt.parameterize(upper1[1], upper1[2], zeros(length(upper1[1])); inj_var=1,
                                               s=spl_s, kspl=spl_k, atol=atol)
-  fun_upper2 = gt.parameterize(upper2[1], upper2[2], zeros(upper2[1]); inj_var=1,
+  fun_upper2 = gt.parameterize(upper2[1], upper2[2], zeros(length(upper2[1])); inj_var=1,
                                               s=spl_s, kspl=spl_k, atol=atol)
-  fun_lower1 = gt.parameterize(lower1[1], lower1[2], zeros(lower1[1]); inj_var=1,
+  fun_lower1 = gt.parameterize(lower1[1], lower1[2], zeros(length(lower1[1])); inj_var=1,
                                               s=spl_s, kspl=spl_k, atol=atol)
-  fun_lower2 = gt.parameterize(lower2[1], lower2[2], zeros(lower2[1]); inj_var=1,
+  fun_lower2 = gt.parameterize(lower2[1], lower2[2], zeros(length(lower2[1])); inj_var=1,
                                               s=spl_s, kspl=spl_k, atol=atol)
   # Discretizes both sides
   if NDIVSx==multidiscrtype
@@ -247,7 +247,7 @@ function generate_perimetergrid(perimeter::Array{Array{T, 1}, 1},
   # --------- GRIDS THE INSIDE OF THE PERIMETER ---------------------
   # Parametric grid
   P_min = zeros(3)
-  P_max = [1, 1, 1*(nz!=0)]
+  P_max = [1, 1, 1*(nz!==0)]
   param_grid = gt.Grid(P_min, P_max, [NDIVSx, NDIVSy, NDIVSz])
 
   # function my_space_transform(X, ind)
@@ -299,8 +299,8 @@ function generate_perimetergrid(perimeter::Array{Array{T, 1}, 1},
   # Applies the space transformation to the parametric grid
   gt.transform3!(param_grid, my_space_transform)
 
-  if save_path!=nothing
-    gt.save(param_grid, file_name; path=save_path)
+  if save_path!==nothing
+    gt.save(param_grid, file_name; path=save_path, format="vtk")
 
     if paraview
       strn = file_name*".vtk"
@@ -337,7 +337,7 @@ function generate_windfarm(D::Array{T,1}, H::Array{T,1}, N::Array{Int64,1},
                           NDIVSx=50, NDIVSy=50, NDIVSz=50,
                           z_min="automatic", z_max="automatic",
                           z_off=0.0,
-                          fdom_perimeter::Union{Array{Array{T, 1}}, Void}=nothing,
+                          fdom_perimeter::Union{Array{Array{T, 1}}, Any}=nothing,
                           # PERIMETER SPLINE OPTIONS
                           verify_spline::Bool=true,
                           spl_s=0.001, spl_k="automatic",
@@ -357,7 +357,7 @@ function generate_windfarm(D::Array{T,1}, H::Array{T,1}, N::Array{Int64,1},
 
   _zmin = z_min=="automatic" ? 0 : z_min
   _zmax = z_max=="automatic" ? maximum(H) + 1.25*maximum(D)/2 : z_max
-  fdom = generate_perimetergrid(fdom_perimeter != nothing ? fdom_perimeter : perimeter,
+  fdom = generate_perimetergrid(fdom_perimeter !== nothing ? fdom_perimeter : perimeter,
                                     NDIVSx, NDIVSy, NDIVSz;
                                     z_min=_zmin+z_off, z_max=_zmax+z_off,
                                     verify_spline=false,
@@ -369,10 +369,10 @@ function generate_windfarm(D::Array{T,1}, H::Array{T,1}, N::Array{Int64,1},
   gt.calculate_field(fdom, wake, "wake", "vector", "node")
 
 
-  if save_path!=nothing
-    gt.save(windfarm, file_name; path=save_path, num=num)
-    gt.save(perimeter_grid, file_name*"_perimeter"; path=save_path, num=num)
-    gt.save(fdom, file_name*"_fdom"; path=save_path, num=num)
+  if save_path!==nothing
+    gt.save(windfarm, file_name; path=save_path, num=num, format="vtk")
+    gt.save(perimeter_grid, file_name*"_perimeter"; path=save_path, num=num, format="vtk")
+    gt.save(fdom, file_name*"_fdom"; path=save_path, num=num, format="vtk")
 
     if paraview
       strn = ""

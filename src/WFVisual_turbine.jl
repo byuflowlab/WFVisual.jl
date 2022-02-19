@@ -64,7 +64,7 @@ function generate_windturbine(Rtip::Float64, h::Float64, blade_name::String,
   gt.lintransform!(blade_grid, gt.rotation_matrix(0, -pitch, 0), zeros(3))
 
   # Rotates the rotor
-  if rot != nothing
+  if rot !== nothing
     gt.lintransform!(blade_grid, gt.rotation_matrix(0, 0, rot), zeros(3))
   elseif random_rot
     gt.lintransform!(blade_grid, gt.rotation_matrix(0, 0, rand()*360), zeros(3))
@@ -75,7 +75,7 @@ function generate_windturbine(Rtip::Float64, h::Float64, blade_name::String,
   rotM = gt.rotation_matrix(0, 0, 360/nblades)
   for i in 1:nblades
     this_blade = deepcopy(blade_grid)
-    gt.lintransform!(this_blade, eye(3), [-Thub*5/6, 0, 0])
+    gt.lintransform!(this_blade, collect(Diagonal(ones(3))), [-Thub*5/6, 0.0, 0.0])
     gt.addgrid(rotor, "blade$i", this_blade)
 
     gt.lintransform!(blade_grid, rotM, zeros(3))
@@ -90,11 +90,11 @@ function generate_windturbine(Rtip::Float64, h::Float64, blade_name::String,
 
   # Translates and adds rotor
   # gt.lintransform!(rotor, eye(3), C-*[Thub/2, 0, 0])
-  gt.lintransform!(rotor, eye(3), C)
+  gt.lintransform!(rotor, collect(Diagonal(ones(3))), C)
   gt.addgrid(windturbine, "rotor", rotor)
 
-  if save_path!=nothing
-    gt.save(windturbine, file_name; path=save_path)
+  if save_path!==nothing
+    gt.save(windturbine, file_name; path=save_path, format="vtk")
 
     if paraview
       strn = ""
@@ -175,7 +175,7 @@ function generate_loft(bscale::Real, b_low::Real, b_up::Real, b_NDIVS::Int64,
 
   rfl_NDIVS = size(airfoils[1][2], 1)-1
   for (pos, rfl) in airfoils
-    if rfl_NDIVS!=size(rfl,1)-1
+    if rfl_NDIVS!==size(rfl,1)-1
       error("All airfoil sections must have the same number of points.")
     end
   end
@@ -206,7 +206,7 @@ function generate_loft(bscale::Real, b_low::Real, b_up::Real, b_NDIVS::Int64,
   _spl_LE_z = Dierckx.Spline1D(LE_z[:, 1], LE_z[:, 2];
                       k= size(LE_z,1)>=spline_k ? spline_k : size(LE_z,1)-1,
                                 s=spline_s, bc=spline_bc)
-  if tilt_z!=nothing
+  if tilt_z!==nothing
     _spl_tlt_z = Dierckx.Spline1D(tilt_z[:, 1], tilt_z[:, 2];
                       k= size(tilt_z,1)>=spline_k ? spline_k : size(tilt_z,1)-1,
                                 s=spline_s, bc=spline_bc)
@@ -234,7 +234,7 @@ function generate_loft(bscale::Real, b_low::Real, b_up::Real, b_NDIVS::Int64,
     p2 = plt.plot(y_poss, [_spl_twist(y) for y in y_poss], "--g",
                                                           label="Spline twist")
     pextra = []
-    if tilt_z!=nothing
+    if tilt_z!==nothing
       pextra1 = plt.plot(tilt_z[:,1], tilt_z[:,2], "or", label="Org tilt z",
                                                                       alpha=0.5)
       pextra2 = plt.plot(y_poss, [_spl_tlt_z(y) for y in y_poss], "--r",
@@ -296,7 +296,7 @@ function generate_loft(bscale::Real, b_low::Real, b_up::Real, b_NDIVS::Int64,
     point = chord*point
 
     # Applies twist to the airfoil point
-    tlt_z = tilt_z!=nothing ?  _spl_tlt_z(abs(span)) : 0.0
+    tlt_z = tilt_z!==nothing ?  _spl_tlt_z(abs(span)) : 0.0
     point = gt.rotation_matrix(-twist, -tlt_z, 0)*point
 
     # Places the point relative to LE and scales by span scale
@@ -313,9 +313,9 @@ function generate_loft(bscale::Real, b_low::Real, b_up::Real, b_NDIVS::Int64,
   dimsplit = 2              # Dimension along which to split
   triang_grid = gt.GridTriangleSurface(grid, dimsplit)
 
-  if save_path!=nothing
+  if save_path!==nothing
     # Outputs a vtk file
-    gt.save(triang_grid, file_name; path=save_path)
+    gt.save(triang_grid, file_name; path=save_path, format="vtk")
 
     # Outputs a jld file
     JLD.save(joinpath(save_path, "$file_name.jld"), "triang_grid", triang_grid)
@@ -348,32 +348,32 @@ function generate_blade(Rtip::Real, Rhub::Real, r_NDIVS::Int64,
                         optargs...)
 
   # Reads all data
-  data_airfoil = CSV.read(joinpath(data_path, blade_name*"_airfoilsections.csv"))
-  data_chord = CSV.read(joinpath(data_path, blade_name*"_chord.csv"))
-  data_twist = CSV.read(joinpath(data_path, blade_name*"_twist.csv"))
-  data_lex = CSV.read(joinpath(data_path, blade_name*"_lex.csv"))
-  data_lez = CSV.read(joinpath(data_path, blade_name*"_lez.csv"))
+  data_airfoil = CSV.read(joinpath(data_path, blade_name*"_airfoilsections.csv"),DataFrame)
+  data_chord = CSV.read(joinpath(data_path, blade_name*"_chord.csv"),DataFrame)
+  data_twist = CSV.read(joinpath(data_path, blade_name*"_twist.csv"),DataFrame)
+  data_lex = CSV.read(joinpath(data_path, blade_name*"_lex.csv"),DataFrame)
+  data_lez = CSV.read(joinpath(data_path, blade_name*"_lez.csv"),DataFrame)
 
   airfoils = Tuple{Float64, Array{Float64, 2}}[]
   for i in 1:size(data_airfoil, 1)
-    pos = data_airfoil[1][i]
-    file_name = blade_name*"_"*data_airfoil[2][i]
+    pos = data_airfoil[!,1][i]
+    file_name = blade_name*"_"*data_airfoil[!,2][i]
 
     # rfl_contour = Array(CSV.read(joinpath(data_path, "airfoils/$file_name")))
-    rfl_contour = CSV.read(joinpath(data_path, "airfoils/$file_name"))
+    rfl_contour = CSV.read(joinpath(data_path, "airfoils/$file_name"),DataFrame)
 
     # Convert DataFrames to Arrays
-    rfl_contour = hcat(rfl_contour[1], rfl_contour[2])
+    rfl_contour = hcat(rfl_contour[!,1], rfl_contour[!,2])
     rfl_contour = [val for val in rfl_contour]
 
     push!(airfoils, (pos, rfl_contour))
   end
 
   # Convert DataFrames to Arrays
-  data_chord = hcat(data_chord[1], data_chord[2])
-  data_twist = hcat(data_twist[1], data_twist[2])
-  data_lex = hcat(data_lex[1], data_lex[2])
-  data_lez = hcat(data_lez[1], data_lez[2])
+  data_chord = hcat(data_chord[!,1], data_chord[!,2])
+  data_twist = hcat(data_twist[!,1], data_twist[!,2])
+  data_lex = hcat(data_lex[!,1], data_lex[!,2])
+  data_lez = hcat(data_lez[!,1], data_lez[!,2])
 
   # Get rid of the Missing type
   data_chord = [val for val in data_chord]

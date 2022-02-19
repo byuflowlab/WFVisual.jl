@@ -13,11 +13,13 @@ export generate_windfarm
 
 
 # ------------ GENERIC MODULES -------------------------------------------------
-import JLD
-import CSV
-import Dierckx
-import PyPlot
-import PyCall
+using JLD
+using CSV
+using Dierckx
+using PyPlot
+using PyCall
+using DataFrames
+using LinearAlgebra
 
 const plt = PyPlot
 
